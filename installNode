@@ -1,0 +1,36 @@
+#!/bin/bash
+#assembled by njs811
+main(){ 
+clear
+echo "Enter an rpcuser"
+read rpcUsername
+echo "Enter an rpcpass"
+read rpcPassword
+sudo apt-get update -y
+sudo apt-get install git
+git clone https://github.com/spreadcoin/spreadcoin.git spreadcoin
+sudo apt-get install build-essential -y
+sudo apt-get install autoconf libboost-all-dev libssl-dev libprotobuf-dev protobuf-compiler libqt4-dev libqrencode-dev libdb-dev libdb++-dev libminiupnpc-dev -y
+cd spreadcoin/src
+git checkout master;
+sudo chmod 755 leveldb/build_detect_platform
+sudo make -f makefile.unix
+mkdir -p ~/.spreadcoin
+cat > ~/.spreadcoin/spreadcoin.conf <<EOF
+rpcuser="$rpcUsername"
+rpcpassword="$rpcPassword"
+maxconnections=1000
+timeout=20000
+port=41678
+txindex=1
+EOF
+sudo cp spreadcoind /usr/local/bin/spreadcoind
+sudo ln -s /usr/local/bin/spreadcoind /usr/bin/spreadcoind
+spreadcoind & disown
+(crontab -l 2>>/dev/null; echo "@reboot spreadcoind -daemon") | crontab -
+(crontab -l 2>>/dev/null; echo "0 * * * * /usr/bin/spreadcoind -daemon") | crontab -
+clear
+printf "\n\nRun 'spreadcoind getinfo' to see how many blocks you have downloaded"
+printf "\nRun 'spreadcoind stop' to stop the node.\n\n"
+} 
+main
